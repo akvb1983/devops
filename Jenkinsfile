@@ -20,7 +20,7 @@ pipeline {
             steps {
                 sh '''
                    ansible-playbook \
-                   -i ~/devops-lab/hosts.ini \
+                   -i inventory/hosts.ini \
                    playbooks/deploy.yml
                 '''
             }
