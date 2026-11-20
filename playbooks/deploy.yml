@@ -23,3 +23,22 @@
     - name: Execute deployment script
       ansible.builtin.script:
         cmd: ../scripts/deploy.sh
+
+    - name: Install Python packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-pip
+        state: present
+        update_cache: true
+
+    - name: Install Flask package
+      ansible.builtin.apt:
+        name: python3-flask
+        state: present
+        update_cache: true
+
+    - name: Run Flask App
+      ansible.builtin.shell: |
+        nohup python3 /opt/employee-portal/app.py \
+        > /opt/employee-portal/app.log 2>&1 &
