@@ -1,5 +1,4 @@
 pipeline {
-
     agent any
 
     stages {
@@ -19,13 +18,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                   ansible-playbook \
-                   -i ~/devops-lab/hosts.ini \
-                   playbooks/deploy.yml
+                ssh -o StrictHostKeyChecking=no root@devops-controller "
+                cd /root/devops-project &&
+                ansible-playbook -i /root/devops-lab/hosts.ini playbooks/deploy.yml
+                "
                 '''
             }
         }
-
     }
-
 }
