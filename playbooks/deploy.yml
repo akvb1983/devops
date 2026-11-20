@@ -3,26 +3,27 @@
   hosts: webservers
   become: true
 
+  vars:
+    app_dir: /opt/employee-portal
+
   tasks:
 
     - name: Create application directory
       ansible.builtin.file:
-        path: /opt/employee-portal
+        path: "{{ app_dir }}"
         state: directory
+        mode: '0755'
 
     - name: Copy application
       ansible.builtin.copy:
         src: ../app/app.py
-        dest: /opt/employee-portal/app.py
+        dest: "{{ app_dir }}/app.py"
+        mode: '0755'
 
     - name: Copy requirements file
       ansible.builtin.copy:
         src: ../app/requirements.txt
-        dest: /opt/employee-portal/requirements.txt
-
-    - name: Execute deployment script
-      ansible.builtin.script:
-        cmd: ../scripts/deploy.sh
+        dest: "{{ app_dir }}/requirements.txt"
 
     - name: Install Python packages
       ansible.builtin.apt:
@@ -33,12 +34,33 @@
         update_cache: true
 
     - name: Install Flask package
-      ansible.builtin.apt:
-        name: python3-flask
-        state: present
-        update_cache: true
+      ansible.builtin.pip:
+        name: flask
 
-    - name: Run Flask App
+    - name: Stop existing Flask application
       ansible.builtin.shell: |
-        nohup python3 /opt/employee-portal/app.py \
-        > /opt/employee-portal/app.log 2>&1 &
+        pkill -9 -f "/opt/employee-portal/app.py" || true
+      changed_when: false
+      failed_when: false
+
+    - name: Start Flask application
+      ansible.builtin.shell: |
+        nohup python3 {{ app_dir }}/app.py \
+        > {{ app_dir }}/app.log 2>&1 &
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Wait for application startup
+      ansible.builtin.wait_for:
+        port: 5000
+        timeout: 30
+
+    - name: Verify application health
+      ansible.builtin.uri:
+        url: http://localhost:5000
+        return_content: true
+      register: health_check
+
+    - name: Display application response
+      ansible.builtin.debug:
+        msg: "{{ health_check.content }}"
