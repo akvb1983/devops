@@ -1,0 +1,25 @@
+---
+- name: Deploy Flask Application
+  hosts: webservers
+  become: true
+
+  tasks:
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: /opt/employee-portal
+        state: directory
+
+    - name: Copy application
+      ansible.builtin.copy:
+        src: ../app/app.py
+        dest: /opt/employee-portal/app.py
+
+    - name: Copy requirements file
+      ansible.builtin.copy:
+        src: ../app/requirements.txt
+        dest: /opt/employee-portal/requirements.txt
+
+    - name: Execute deployment script
+      ansible.builtin.script:
+        cmd: ../scripts/deploy.sh
