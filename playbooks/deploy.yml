@@ -33,23 +33,6 @@
         state: link
         force: true
 
-    - name: Create application directory
-      ansible.builtin.file:
-        path: "{{ app_dir }}"
-        state: directory
-        mode: '0755'
-
-    - name: Copy application
-      ansible.builtin.copy:
-        src: ../app/app.py
-        dest: "{{ app_dir }}/app.py"
-        mode: '0755'
-
-    - name: Copy requirements file
-      ansible.builtin.copy:
-        src: ../app/requirements.txt
-        dest: "{{ app_dir }}/requirements.txt"
-
     - name: Install Python packages
       ansible.builtin.apt:
         name:
