@@ -6,10 +6,13 @@
   vars:
     releases_dir: /opt/releases
     current_dir: /opt/current
-    app_dir: /opt/employee-portal
-    release_version: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
 
   tasks:
+    
+    - name: Generate release version
+      ansible.builtin.set_fact:
+        release_version: "{{ ansible_date_time.epoch }}"
+    
 
     - name: Create releases base directory
       ansible.builtin.file:
@@ -52,7 +55,7 @@
 
     - name: Stop existing Flask application
       ansible.builtin.shell: |
-        pkill -9 -f "/opt/current/app.py" || true
+        pkill -9 -f "{{current_dir}}/app.py" || true
       changed_when: false
       failed_when: false
 
