@@ -1,8 +1,0 @@
----
- - name: Check Middleware Lab Servers
-   hosts: webservers
-   gather_facts: false
-
-   tasks:
-    - name: Check Connectivity
-      ansible.builtin.ping:

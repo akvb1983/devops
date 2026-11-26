@@ -4,9 +4,35 @@
   become: true
 
   vars:
-    app_dir: /opt/employee-portal
+  releases_dir: /opt/releases
+  current_dir: /opt/current
+  app_dir: /opt/employee-portal
+  release_version: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
+
 
   tasks:
+
+    - name: Create release directory
+      file:
+        path: "/opt/releases/{{ release_version }}"
+        state: directory
+
+    - name: Copy application
+      ansible.builtin.copy:
+        src: ../app/app.py
+        dest: "{{ releases_dir }}/{{ release_version }}/app.py"
+
+    - name: Copy requirements file
+      ansible.builtin.copy:
+        src: ../app/requirements.txt
+        dest: "{{ releases_dir }}/{{ release_version }}/requirements.txt"
+
+    - name: Update current symlink
+      file:
+        src: "{{ releases_dir }}/{{ release_version }}"
+        dest: "{{ current_dir }}"
+        state: link
+        force: true
 
     - name: Create application directory
       ansible.builtin.file:
@@ -37,16 +63,16 @@
 
     - name: Stop existing Flask application
       ansible.builtin.shell: |
-        pkill -9 -f "/opt/employee-portal/app.py" || true
+        pkill -9 -f "/opt/current/app.py" || true
       changed_when: false
       failed_when: false
 
     - name: Start Flask application
       ansible.builtin.shell: |
-        nohup python3 {{ app_dir }}/app.py \
-        > {{ app_dir }}/app.log 2>&1 &
+        nohup python3 {{ current_dir }}/app.py \
+        > {{ current_dir }}/app.log 2>&1 &
       args:
-        chdir: "{{ app_dir }}"
+        chdir: "{{ current_dir }}"
 
     - name: Wait for application startup
       ansible.builtin.wait_for:
