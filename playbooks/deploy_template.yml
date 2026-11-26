@@ -1,0 +1,27 @@
+---
+- name: Deploy application configuration using Jinja2
+  hosts: webservers
+  become: true
+  gather_facts: false
+
+  tasks:
+
+    - name: Ensure application directory exists
+      ansible.builtin.file:
+        path: /opt/myapp
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Deploy application properties configuration
+      ansible.builtin.template:
+        src: ../templates/app.properties.j2
+        dest: /opt/myapp/app.properties
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Display deployed configuration location
+      ansible.builtin.debug:
+        msg: "Configuration deployed on {{ inventory_hostname }}"

@@ -1,0 +1,31 @@
+---
+- name: Demostrate force handlers with Tomcat 10.
+  hosts: webservers
+  become: true
+  gather_facts: false
+    #  force_handlers: true
+
+  tasks:
+    - name: Deploy test configuration.
+      ansible.builtin.copy:
+        content: |
+          force_handlers_test=enabled
+        dest: /opt/{{app_name}}/force_handlers_test.properties
+        owner: "{{app_owner}}"
+        group: "{{app_group}}"
+        mode: "{{app_mode}}"
+      notify: Restart Tomcat 10
+
+    - name: Simulate application deployment failure.
+      ansible.builtin.command:
+        cmd: /bin/false
+
+    - name: This task should not execute.
+      ansible.builtin.debug:
+        msg: "This task should be skipped."
+
+  handlers:
+    - name: Restart Tomcat 10
+      ansible.builtin.command:
+        cmd: /usr/local/bin/manage-tomcat10.sh restart
+      changed_when: true

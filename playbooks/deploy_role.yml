@@ -1,0 +1,8 @@
+---
+- name: Deploy middleware configuration using Ansible role
+  hosts: webservers
+  become: true
+  gather_facts: false
+
+  roles:
+    - middleware_config

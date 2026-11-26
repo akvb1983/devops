@@ -1,0 +1,47 @@
+
+---
+- name: Demonstrate Ansible handler execution order
+  hosts: webservers
+  become: true
+
+  tasks:
+    - name: Deploy test configuration
+      ansible.builtin.copy:
+        content: |
+          deployment_status=updated
+        dest: /opt/MyTrainingApp/handler_order_test.properties
+        owner: ansible
+        group: ansible
+        mode: '0644'
+      notify: Handler B
+
+    - name: Perform another configuration task
+      ansible.builtin.copy:
+        content: |
+          deployment_check=completed
+        dest: /opt/MyTrainingApp/handler_order_check.properties
+        owner: ansible
+        group: ansible
+        mode: '0644'
+      notify: Handler A
+
+    - name: Normal task before flushing handlers
+      ansible.builtin.debug:
+        msg: "Normal tasks completed. Now flushing handlers."
+
+          #    - name: Execute pending handlers immediately
+          #      ansible.builtin.meta: flush_handlers
+
+    - name: Normal task after flushing handlers
+      ansible.builtin.debug:
+        msg: "Both handlers have completed."
+
+  handlers:
+    - name: Handler A
+      ansible.builtin.debug:
+        msg: "Handler A executed first."
+
+    - name: Handler B
+      ansible.builtin.debug:
+        msg: "Handler B executed second."
+

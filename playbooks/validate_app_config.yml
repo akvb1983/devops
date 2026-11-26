@@ -1,0 +1,31 @@
+---
+- name: Validate application configuration.
+  hosts: webservers
+  become: true
+  gather_facts: false
+
+  tasks:
+
+    - name: Simulate configuration file missing on node2.
+      ansible.builtin.file:
+        path: /opt/MyTrainingApp/rollback-demo.properties
+        state: absent
+      when: inventory_hostname == "node2"
+
+    - name: Check application config file.
+      ansible.builtin.stat:
+        path: /opt/MyTrainingApp/rollback-demo.properties
+      register: app_config
+
+    - name: Verify config file exists.
+      ansible.builtin.assert:
+        that:
+          - app_config.stat.exists
+          - app_config.stat.isreg
+        success_msg: "Application configuration exists on {{inventory_hostname}}"
+        fail_msg: "Application configuration missing on {{inventory_hostname}}"
+
+    - name: Display verification result.
+      ansible.builtin.debug:
+        msg: "Application configuration validation Successfull on {{inventory_hostname}}"
+

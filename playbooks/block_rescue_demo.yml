@@ -1,0 +1,53 @@
+
+---
+- name: Demonstrate Ansible block rescue and always
+  hosts: webservers
+  become: true
+
+  tasks:
+
+    - name: Application deployment workflow
+
+      block:
+
+        - name: Deploy test application configuration
+          ansible.builtin.copy:
+            content: |
+              application_name=MyTrainingApp
+              deployment_status=started
+              deployment_version=1.0
+            dest: /opt/MyTrainingApp/block_rescue_demo.properties
+            owner: ansible
+            group: ansible
+            mode: '0644'
+
+        - name: Simulate application deployment failure
+          ansible.builtin.command:
+            cmd: /bin/false
+
+        - name: Verify deployment completion
+          ansible.builtin.debug:
+            msg: "Application deployment completed successfully."
+
+      rescue:
+
+        - name: Execute recovery action
+          ansible.builtin.debug:
+            msg: "Deployment failed. Recovery action initiated."
+
+        - name: Record deployment failure
+          ansible.builtin.copy:
+            content: |
+              deployment_status=FAILED
+              recovery_status=EXECUTED
+            dest: /opt/MyTrainingApp/recovery_status.properties
+            owner: ansible
+            group: ansible
+            mode: '0644'
+
+      always:
+
+        - name: Record final deployment workflow status
+          ansible.builtin.debug:
+            msg: "Deployment workflow finished on {{ inventory_hostname }}."
+

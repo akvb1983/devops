@@ -1,0 +1,101 @@
+
+---
+- name: Deploy application with automatic rollback
+  hosts: webservers
+  become: true
+  gather_facts: false
+
+  vars:
+    app_name: MyTrainingApp
+    app_version: "2.0.0"
+    release_root: /opt/myapp/releases
+    current_path: /opt/myapp/current
+
+    # true deliberately makes validation fail for testing.
+    simulate_failure: false
+
+    expected_version: >-
+      {{ '99.0.0' if simulate_failure else app_version }}
+
+  tasks:
+    - name: Find the currently active release
+      ansible.builtin.command:
+        cmd: readlink -f {{ current_path }}
+      register: current_release
+      changed_when: false
+      failed_when: false
+
+    - name: Save the previous release path
+      ansible.builtin.set_fact:
+        previous_release_target: >-
+          {{ current_release.stdout
+             if current_release.rc == 0
+             else release_root ~ '/1.0.0' }}
+
+    - name: Deploy and validate the new release
+      block:
+        - name: Create the new release directory
+          ansible.builtin.file:
+            path: "{{ release_root }}/{{ app_version }}"
+            state: directory
+            owner: root
+            group: root
+            mode: "0755"
+
+        - name: Copy the new application page
+          ansible.builtin.copy:
+            dest: "{{ release_root }}/{{ app_version }}/index.html"
+            content: |
+              Application: {{ app_name }}
+              Version: {{ app_version }}
+              Status: Working
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Switch current to the new release
+          ansible.builtin.file:
+            src: "{{ release_root }}/{{ app_version }}"
+            dest: "{{ current_path }}"
+            state: link
+            force: true
+
+        - name: Validate the active release version
+          ansible.builtin.command:
+            cmd: >-
+              grep -F -q
+              'Version: {{ expected_version }}'
+              {{ current_path }}/index.html
+          changed_when: false
+
+        - name: Report successful deployment
+          ansible.builtin.debug:
+            msg: "Deployment of {{ app_version }} succeeded."
+
+      rescue:
+        - name: Restore the previous release link
+          ansible.builtin.file:
+            src: "{{ previous_release_target }}"
+            dest: "{{ current_path }}"
+            state: link
+            force: true
+
+        - name: Verify the restored release
+          ansible.builtin.command:
+            cmd: readlink -f {{ current_path }}
+          register: restored_release
+          changed_when: false
+
+        - name: Report rollback result
+          ansible.builtin.debug:
+            msg: >-
+              Deployment failed. Rollback completed.
+              Active release is {{ restored_release.stdout }}.
+
+      always:
+        - name: Display deployment recovery summary
+          ansible.builtin.debug:
+            msg: >-
+              Deployment attempt for {{ app_version }} finished.
+              Check the earlier tasks to see whether rollback was needed.
+

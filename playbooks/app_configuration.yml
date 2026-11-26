@@ -1,0 +1,22 @@
+---
+- name: Display application configuration
+  hosts: webservers
+  gather_facts: false
+
+  tasks:
+
+    - name: Display application details
+      ansible.builtin.debug:
+        msg:
+          - "Application: {{ app_name }}"
+          - "Version: {{ app_version }}"
+          - "Environment: {{ app_environment }}"
+          - "Port: {{ app_port }}"
+          - "Log Level: {{ log_level }}"
+          - "Monitoring Enabled: {{ monitoring_enabled }}"
+
+    - name: Display enabled application modules
+      ansible.builtin.debug:
+        msg: "Enabled module: {{ item.name }}"
+      loop: "{{ app_modules }}"
+      when: item.enabled | bool

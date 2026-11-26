@@ -1,0 +1,31 @@
+---
+- name: Create application directories.
+  hosts: webservers
+  become: true
+
+  vars:
+    app_directory: "/opt/{{app_name}}"
+    app_owner: ansible
+    app_group: ansible
+    app_mode: '0755'
+
+    deployment_environment: Production
+
+    applications:
+      - MyTrainingApp
+      - PaymentApp
+      - BillingApp
+      - CustomerApp
+
+
+  tasks:
+    - name: Create application directory.
+      ansible.builtin.file:
+        path: "/opt/{{item}}"
+        state: directory
+        owner: "{{app_owner}}"
+        group: "{{app_group}}"
+        mode: "{{app_mode}}"
+
+      loop: "{{applications}}"
+      when: deployment_environment == "Production" or item in ["MyTrainingApp", "PaymentApp"]

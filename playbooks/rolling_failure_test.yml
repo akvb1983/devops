@@ -1,0 +1,44 @@
+---
+- name: Test failure handling during rolling deployment
+  hosts: webservers
+  become: true
+  gather_facts: false
+
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    app_name: MyTrainingApp
+    app_version: "3.0.0"
+    app_directory: /opt/myapp
+    simulate_failure: true
+
+  tasks:
+    - name: Display deployment target
+      ansible.builtin.debug:
+        msg: "Starting deployment on {{ inventory_hostname }}"
+
+    - name: Deploy application version
+      ansible.builtin.copy:
+        dest: "{{ app_directory }}/index.html"
+        content: |
+          Application: {{ app_name }}
+          Version: {{ app_version }}
+          Server: {{ inventory_hostname }}
+          Status: Working
+        mode: "0644"
+
+    - name: Validate deployed application version
+      ansible.builtin.command:
+        cmd: "grep -F -q 'Version: {{ app_version }}' {{ app_directory }}/index.html"
+      changed_when: false
+
+    - name: Simulate failure on node1
+      ansible.builtin.assert:
+        that:
+          - not (simulate_failure and inventory_hostname == 'node1')
+        fail_msg: "Simulated deployment failure on {{ inventory_hostname }}"
+
+    - name: Display deployment success
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} successfully deployed {{ app_version }}"

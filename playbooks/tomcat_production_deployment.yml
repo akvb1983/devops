@@ -1,0 +1,53 @@
+
+---
+- name: Tomcat deployment with restart and health verification
+  hosts: webservers
+  become: true
+
+  vars:
+    tomcat_script_path: /usr/local/bin/manage-tomcat10.sh
+    tomcat_http_port: 8080
+
+  tasks:
+    - name: Deploy application configuration
+      ansible.builtin.template:
+        src: ../templates/tomcat-deployment.properties.j2
+        dest: "/opt/{{ app_name }}/tomcat-deployment.properties"
+        owner: ansible
+        group: ansible
+        mode: '0644'
+      notify: Restart Tomcat 10
+
+    - name: Execute pending handlers before health checks
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify Tomcat process status
+      ansible.builtin.command:
+        cmd: "{{ tomcat_script_path }} status"
+      register: tomcat_status
+      changed_when: false
+      failed_when: tomcat_status.rc != 0
+
+    - name: Verify Tomcat HTTP port is available
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ tomcat_http_port }}"
+        state: started
+        delay: 2
+        timeout: 30
+
+    - name: Display deployment verification
+      ansible.builtin.debug:
+        msg:
+          - "Tomcat status: {{ tomcat_status.stdout }}"
+          - "Application: {{ app_name }}"
+          - "Version: {{ app_version }}"
+          - "Environment: {{ app_environment }}"
+          - "Deployment verification: PASSED"
+
+  handlers:
+    - name: Restart Tomcat 10
+      ansible.builtin.command:
+        cmd: "{{ tomcat_script_path }} restart"
+      changed_when: true
+
