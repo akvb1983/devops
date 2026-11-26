@@ -11,10 +11,17 @@
 
   tasks:
 
-    - name: Create release directory
-      file:
-        path: "/opt/releases/{{ release_version }}"
+    - name: Create releases base directory
+      ansible.builtin.file:
+        path: "{{ releases_dir }}"
         state: directory
+        mode: '0755'
+
+    - name: Create release directory
+      ansible.builtin.file:
+        path: "{{ releases_dir }}/{{ release_version }}"
+        state: directory
+        mode: '0755'
 
     - name: Copy application
       ansible.builtin.copy:
