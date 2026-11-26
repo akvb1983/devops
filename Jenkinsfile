@@ -20,7 +20,7 @@ pipeline {
                 sh '''
                 ssh -o StrictHostKeyChecking=no root@devops-controller "
                 cd /root/devops-project &&
-                ansible-playbook -i /root/devops-lab/hosts.ini playbooks/deploy.yml
+                ansible-playbook -e release_version=${BUILD_NUMBER} -i /root/devops-lab/hosts.ini playbooks/deploy.yml
                 "
                 '''
             }

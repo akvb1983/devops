@@ -11,8 +11,6 @@
     
     - name: Generate release version
       ansible.builtin.set_fact:
-        release_version: "{{ ansible_date_time.epoch }}"
-    
 
     - name: Create releases base directory
       ansible.builtin.file:
