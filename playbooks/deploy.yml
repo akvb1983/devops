@@ -4,11 +4,10 @@
   become: true
 
   vars:
-  releases_dir: /opt/releases
-  current_dir: /opt/current
-  app_dir: /opt/employee-portal
-  release_version: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
-
+    releases_dir: /opt/releases
+    current_dir: /opt/current
+    app_dir: /opt/employee-portal
+    release_version: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
 
   tasks:
 
