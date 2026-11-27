@@ -89,7 +89,7 @@
         ansible.builtin.debug:
           msg: "{{ health_check.content }}"
 
-    rescue:
+   - rescue:
 
       - name: Rollback to previous release
         ansible.builtin.file:
