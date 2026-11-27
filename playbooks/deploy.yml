@@ -42,79 +42,79 @@
       ansible.builtin.debug:
         msg: "Previous Release = {{ previous_release.stdout }}"
 
-  - block:
+    - block:
 
-    - name: Update current symlink
-      file:
-        src: "{{ releases_dir }}/{{ release_version }}"
-        dest: "{{ current_dir }}"
-        state: link
-        force: true
+      - name: Update current symlink
+        file:
+          src: "{{ releases_dir }}/{{ release_version }}"
+          dest: "{{ current_dir }}"
+          state: link
+          force: true
 
-    - name: Install Python packages
-      ansible.builtin.apt:
-        name:
-          - python3
-          - python3-pip
-          - python3-flask
-        state: present
-        update_cache: true
+      - name: Install Python packages
+        ansible.builtin.apt:
+          name:
+            - python3
+            - python3-pip
+            - python3-flask
+          state: present
+          update_cache: true
 
 
-    - name: Stop existing Flask application
-      ansible.builtin.shell: |
-        pkill -9 -f "{{current_dir}}/app.py" || true
-      changed_when: false
-      failed_when: false
+      - name: Stop existing Flask application
+        ansible.builtin.shell: |
+          pkill -9 -f "{{current_dir}}/app.py" || true
+        changed_when: false
+        failed_when: false
 
-    - name: Start Flask application
-      ansible.builtin.shell: |
-        nohup python3 {{ current_dir }}/app.py \
-        > {{ current_dir }}/app.log 2>&1 &
-      args:
-        chdir: "{{ current_dir }}"
+      - name: Start Flask application
+        ansible.builtin.shell: |
+          nohup python3 {{ current_dir }}/app.py \
+          > {{ current_dir }}/app.log 2>&1 &
+        args:
+          chdir: "{{ current_dir }}"
 
-    - name: Wait for application startup
-      ansible.builtin.wait_for:
-        port: 5000
-        timeout: 30
+      - name: Wait for application startup
+        ansible.builtin.wait_for:
+          port: 5000
+          timeout: 30
 
-    - name: Verify application health
-      ansible.builtin.uri:
-        url: http://localhost:5000
-        return_content: true
-      register: health_check
+      - name: Verify application health
+        ansible.builtin.uri:
+          url: http://localhost:5000
+          return_content: true
+        register: health_check
 
-    - name: Display application response
-      ansible.builtin.debug:
-        msg: "{{ health_check.content }}"
+      - name: Display application response
+        ansible.builtin.debug:
+          msg: "{{ health_check.content }}"
 
-  rescue:
+    rescue:
 
-    - name: Rollback to previous release
-      ansible.builtin.file:
-        src: "{{ releases_dir }}/{{ previous_release.stdout }}"
-        dest: "{{ current_dir }}"
-        state: link
-        force: true
+      - name: Rollback to previous release
+        ansible.builtin.file:
+          src: "{{ releases_dir }}/{{ previous_release.stdout }}"
+          dest: "{{ current_dir }}"
+          state: link
+          force: true
 
-    - name: Stop broken release
-      ansible.builtin.shell: |
-        pkill -9 -f app.py || true
-      ignore_errors: true
+      - name: Stop broken release
+        ansible.builtin.shell: |
+          pkill -9 -f app.py || true
+        ignore_errors: true
 
-    - name: Start previous release
-      ansible.builtin.shell: |
-        nohup python3 {{ current_dir }}/app.py \
-        > {{ current_dir }}/app.log 2>&1 &
-      args:
-        chdir: "{{ current_dir }}"
+      - name: Start previous release
+        ansible.builtin.shell: |
+          nohup python3 {{ current_dir }}/app.py \
+          > {{ current_dir }}/app.log 2>&1 &
+        args:
+          chdir: "{{ current_dir }}"
 
-    - name: Verify rollback
-      ansible.builtin.uri:
-        url: http://localhost:5000
-        return_content: true
+      - name: Verify rollback
+        ansible.builtin.uri:
+          url: http://localhost:5000
+          return_content: true
 
-    - name: Rollback completed
-      ansible.builtin.debug:
-        msg: "Rollback completed to release {{ previous_release.stdout }}"    
+      - name: Rollback completed
+        ansible.builtin.debug:
+          msg: "Rollback completed to release {{ previous_release.stdout }}"    
