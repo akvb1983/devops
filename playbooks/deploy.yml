@@ -2,7 +2,7 @@
 - name: Deploy Flask Application
   hosts: webservers
   become: true
-
+    #########
   vars:
     releases_dir: /opt/releases
     current_dir: /opt/current
