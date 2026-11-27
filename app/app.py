@@ -2,6 +2,8 @@ from flask import Flask
 import socket
 import os
 
+THIS_IS_BROKEN_CODE
+
 app = Flask(__name__)
 
 VERSION = "8"

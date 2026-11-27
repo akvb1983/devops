@@ -31,6 +31,19 @@
         src: ../app/requirements.txt
         dest: "{{ releases_dir }}/{{ release_version }}/requirements.txt"
 
+    - name: Capture current release
+      ansible.builtin.shell: |
+        readlink -f {{ current_dir }} | awk -F/ '{print $NF}'
+      register: previous_release
+      failed_when: false
+      changed_when: false
+
+    - name: Display previous release
+      ansible.builtin.debug:
+        msg: "Previous Release = {{ previous_release.stdout }}"
+
+  - block:
+
     - name: Update current symlink
       file:
         src: "{{ releases_dir }}/{{ release_version }}"
@@ -75,3 +88,33 @@
     - name: Display application response
       ansible.builtin.debug:
         msg: "{{ health_check.content }}"
+
+  rescue:
+
+    - name: Rollback to previous release
+      ansible.builtin.file:
+        src: "{{ releases_dir }}/{{ previous_release.stdout }}"
+        dest: "{{ current_dir }}"
+        state: link
+        force: true
+
+    - name: Stop broken release
+      ansible.builtin.shell: |
+        pkill -9 -f app.py || true
+      ignore_errors: true
+
+    - name: Start previous release
+      ansible.builtin.shell: |
+        nohup python3 {{ current_dir }}/app.py \
+        > {{ current_dir }}/app.log 2>&1 &
+      args:
+        chdir: "{{ current_dir }}"
+
+    - name: Verify rollback
+      ansible.builtin.uri:
+        url: http://localhost:5000
+        return_content: true
+
+    - name: Rollback completed
+      ansible.builtin.debug:
+        msg: "Rollback completed to release {{ previous_release.stdout }}"    
