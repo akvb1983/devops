@@ -60,6 +60,11 @@
           state: present
           update_cache: true
 
+      - name: Install Prometheus Flask Exporter
+        ansible.builtin.pip:
+          name: prometheus-flask-exporter
+          extra_args: --break-system-packages
+
 
       - name: Stop existing Flask application
         ansible.builtin.shell: |
@@ -101,7 +106,8 @@
       - name: Stop broken release
         ansible.builtin.shell: |
           pkill -9 -f app.py || true
-        ignore_errors: true
+        failed_when: false
+        changed_when: flase
 
       - name: Start previous release
         ansible.builtin.shell: |

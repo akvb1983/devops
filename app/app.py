@@ -1,10 +1,10 @@
 from flask import Flask
 import socket
 import os
-
-THIS_IS_BROKEN_CODE
+from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 VERSION = "8"
 
